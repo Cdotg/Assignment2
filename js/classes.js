@@ -1,22 +1,23 @@
 class Sprite {
-    constructor({ position, velocity, color = 'red', offset }) {
+    constructor({ position, velocity, color = 'red', offset, imageSrc }) {
         this.position = position;
-        this.width = 50;
-        this.height = 150;
-        
+        this.width = 1024; // Set width to canvas width
+        this.height = 576; // Set height to canvas height
+        this.color = color; // Add color property
+        this.image = new Image();
+        this.image.src = imageSrc;
     }
 
-    draw() {
-        
+    draw(c) { // Pass `c` explicitly
+        c.fillStyle = this.color; // Use the color property
+        c.fillRect(this.position.x, this.position.y, this.width, this.height);
+        c.drawImage(this.image, this.position.x, this.position.y, this.width, this.height);
     }
 
-    update() {
-        this.draw();
-        
-        }
+    update(c) {
+        this.draw(c);
     }
-
-    
+}
 
 class Fighter {
     constructor({ position, velocity, color = 'red', offset }) {
@@ -39,11 +40,11 @@ class Fighter {
         this.health = 100;
     }
 
-    draw() {
+    draw(c) { // Pass `c` explicitly
         c.fillStyle = this.color;
         c.fillRect(this.position.x, this.position.y, this.width, this.height);
 
-        // attack box
+        // Draw attack box if attacking
         if (this.isAttacking) {
             c.fillStyle = 'green';
             c.fillRect(
@@ -52,21 +53,22 @@ class Fighter {
                 this.attackBox.width,
                 this.attackBox.height
             );
-        } 
+        }
     }
 
-    update() {
-        this.draw();
+    update(c) {
+        this.draw(c);
         this.attackBox.position.x = this.position.x + this.attackBox.offset.x;
         this.attackBox.position.y = this.position.y;
 
         this.position.x += this.velocity.x;
         this.position.y += this.velocity.y;
 
-        if (this.position.y + this.height + this.velocity.y >= canvas.height) {
+        // Gravity simulation
+        if (this.position.y + this.height + this.velocity.y >= 576) {
             this.velocity.y = 0;
         } else {
-            this.velocity.y += gravity;
+            this.velocity.y += 0.7;
         }
     }
 
