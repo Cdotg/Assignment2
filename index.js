@@ -25,8 +25,7 @@ document.addEventListener('DOMContentLoaded', () => {
         imageSrc: 'img/samurai2/IDLE.png',
         framesMax: 5,
         scale: 2.5,
-        offset: { x: 32, y: -60
-        },
+        offset: { x: 0, y: -60 },
         sprites: {
             idle:{
                 imageSrc: 'img/samurai2/IDLE.png',
@@ -44,6 +43,11 @@ document.addEventListener('DOMContentLoaded', () => {
                 imageSrc: 'img/samurai2/ATTACK 1.png',
                 framesMax: 5,
             }
+        },
+        attackBox:{
+            offset: { x: 100, y: 140},
+            width: 115, 
+            height: 40
         },
         canvas: canvas,
         gravity: gravity
@@ -52,30 +56,32 @@ document.addEventListener('DOMContentLoaded', () => {
     const enemy = new Fighter({
         position: { x: 400, y: 100 },
         velocity: { x: 0, y: 0 },
-        color: 'blue',
-        offset: { x: -50, y: 0 },
-        imageSrc: 'img/samurai2/IDLE.png',
-        framesMax: 5,
-        scale: 2.5,
-        offset: { x: 32, y: -60
-        },
+        imageSrc: 'img/panda/IDLE.png',
+        framesMax: 8,
+        scale: 2,
+        offset: { x: 80, y: -80 },
         sprites: {
             idle:{
-                imageSrc: 'img/samurai2/IDLE.png',
-                framesMax: 5,
+                imageSrc: 'img/panda/IDLE.png',
+                framesMax: 8,
             },
             run:{
-                imageSrc: 'img/samurai2/RUN.png',
+                imageSrc: 'img/panda/RUN.png',
                 framesMax: 8,
             },
             jump:{
-                imageSrc: 'img/samurai2/JUMP.png',
+                imageSrc: 'img/panda/JUMP.png',
                 framesMax: 3,
             },
             attack:{
-                imageSrc: 'img/samurai2/ATTACK 1.png',
-                framesMax: 5,
+                imageSrc: 'img/panda/ATTACK 1.png',
+                framesMax: 7,
             }
+        },
+        attackBox:{
+            offset: { x:-125, y:100 },
+            width: 50,
+            height: 75
         },
         canvas: canvas,
         gravity: gravity
@@ -96,7 +102,7 @@ document.addEventListener('DOMContentLoaded', () => {
         background.update(c);
         shop.update(c);
         player.update(c);
-        // enemy.update(c);
+        enemy.update(c);
 
         player.velocity.x = 0;
         enemy.velocity.x = 0;
@@ -113,19 +119,28 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         // Player jump
-
         if (player.velocity.y < 0) {
             player.switchSprite('jump');
         } else if (player.velocity.y > 0) {
-            player.switchSprite('run')
-
+            player.switchSprite('run');
         }
 
         // Enemy movement
         if (keys.ArrowLeft.pressed && enemy.lastKey === 'ArrowLeft') {
             enemy.velocity.x = -5;
+            enemy.switchSprite('run');
         } else if (keys.ArrowRight.pressed && enemy.lastKey === 'ArrowRight') {
+            enemy.switchSprite('run');
             enemy.velocity.x = 5;
+        } else if (enemy.velocity.y === 0 && !enemy.isAttacking) {
+            enemy.switchSprite('idle');
+        }
+
+        // Enemy jump
+        if (enemy.velocity.y < 0) {
+            enemy.switchSprite('jump');
+        } else if (enemy.velocity.y > 0) {
+            enemy.switchSprite('run');
         }
 
         // Collision detection
@@ -190,7 +205,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 enemy.velocity.y = -15;
                 break;
             case 'ArrowDown':
-                enemy.isAttacking = true;
+                enemy.attack();
                 break;
         }
     });

@@ -47,7 +47,15 @@ class Sprite {
 }
 
 class Fighter extends Sprite {
-    constructor({ position, velocity, color = 'red', imageSrc, scale = 1, framesMax = 1, offset = { x: 0, y: 0 }, sprites, canvas, gravity }) {
+    constructor({position,
+                 velocity,
+                  color = 'red',
+                  imageSrc, scale = 1,
+                  framesMax = 1, offset = { x: 0, y: 0 },
+                  sprites,
+                  attackBox = {offset:{x:100, y:100},width: undefined, height:undefined},
+                  canvas,
+                  gravity }) {
         super({
             position,
             imageSrc,
@@ -57,7 +65,7 @@ class Fighter extends Sprite {
         });
 
         this.velocity = velocity;
-        this.width = 50;
+        this.width = 50; // Default width
         this.height = 150;
         this.lastKey;
         this.attackBox = {
@@ -65,9 +73,9 @@ class Fighter extends Sprite {
                 x: this.position.x,
                 y: this.position.y
             },
-            offset,
-            width: 100,
-            height: 50
+            offset: attackBox.offset,
+            width: attackBox.width,
+            height: attackBox.height,
         };
         this.color = color;
         this.isAttacking;
@@ -80,16 +88,17 @@ class Fighter extends Sprite {
             sprites[sprite].image = new Image();
             sprites[sprite].image.src = sprites[sprite].imageSrc;
         }
-
-        console.log(this.sprites);
     }
 
     update(c) {
         this.draw(c);
         this.animateFrames();
 
+        // Set attack box position in front of the fighter
         this.attackBox.position.x = this.position.x + this.attackBox.offset.x;
-        this.attackBox.position.y = this.position.y;
+        this.attackBox.position.y = this.position.y + this.attackBox.offset.y;
+
+        c.fillRect(this.attackBox.position.x, this.attackBox.position.y, this.attackBox.width, this.attackBox.height);
 
         this.position.x += this.velocity.x;
         this.position.y += this.velocity.y;
