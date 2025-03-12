@@ -22,31 +22,36 @@ document.addEventListener('DOMContentLoaded', () => {
     const player = new Fighter({
         position: { x: 0, y: 0 },
         velocity: { x: 0, y: 0 },
-        imageSrc: 'img/samurai/IDLE.png',
-        framesMax: 10,
+        imageSrc: 'img/samurai2/IDLE.png',
+        framesMax: 5,
         scale: 2.5,
-        offset: { x: 96, y: 75 },
+        offset: { x: 32, y: -60
+        },
         sprites: {
             idle:{
-                imageSrc: 'img/samurai/IDLE.png',
-                framesMax: 10,
+                imageSrc: 'img/samurai2/IDLE.png',
+                framesMax: 5,
             },
             run:{
-                imageSrc: 'img/samurai/RUN.png',
-                framesMax: 16,
-                image: new Image(),
-                offset: { x: 36, y: 75 } // Adjust offset for run sprite
+                imageSrc: 'img/samurai2/RUN.png',
+                framesMax: 8,
             },
-            
-
-        }
+            jump:{
+                imageSrc: 'img/samurai2/JUMP.png',
+                framesMax: 3,
+            },
+        },
+        canvas: canvas,
+        gravity: gravity
     });
 
     const enemy = new Fighter({
         position: { x: 400, y: 100 },
         velocity: { x: 0, y: 0 },
         color: 'blue',
-        offset: { x: -50, y: 0 }
+        offset: { x: -50, y: 0 },
+        canvas: canvas,
+        gravity: gravity
     });
 
     const keys = {
@@ -76,14 +81,22 @@ document.addEventListener('DOMContentLoaded', () => {
         } else if (keys.d.pressed && player.lastKey === 'd') {
             player.velocity.x = 5;
             player.switchSprite('run');
-        } else {
+        } else if (player.velocity.y === 0) {
             player.switchSprite('idle');
+        }
+
+        // Player jump
+
+        if (player.velocity.y < 0) {
+            player.switchSprite('jump');
+        } else if (player.velocity.y > 0) {
+            player.switchSprite('run')
+
         }
 
         // Enemy movement
         if (keys.ArrowLeft.pressed && enemy.lastKey === 'ArrowLeft') {
             enemy.velocity.x = -5;
-          
         } else if (keys.ArrowRight.pressed && enemy.lastKey === 'ArrowRight') {
             enemy.velocity.x = 5;
         }
@@ -126,8 +139,14 @@ document.addEventListener('DOMContentLoaded', () => {
                 player.lastKey = 'a';
                 break;
             case 'w':
-                player.velocity.y = -15;
-                player.lastKey = 'w';
+                if (player.velocity.y === 0) {
+                    player.velocity.y = -15;
+                    if (keys.a.pressed) {
+                        player.velocity.x = -5;
+                    } else if (keys.d.pressed) {
+                        player.velocity.x = 5;
+                    }
+                }
                 break;
             case ' ':
                 player.attack();
