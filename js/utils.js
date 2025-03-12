@@ -18,7 +18,7 @@ function determineWinner({player, enemy, timerId}){
        
     }
     else if(player.health < enemy.health){
-        document.querySelector('#displayText').innerHTML = 'Player 2 Wins'
+        document.querySelector('#displayText').innerHTML = 'Panda Wins'
        
     }
     

@@ -1,6 +1,7 @@
 document.addEventListener('DOMContentLoaded', () => {
     const canvas = document.querySelector('canvas');
     const c = canvas.getContext('2d');
+    const startButton = document.querySelector('#startButton'); // Add start button
 
     canvas.width = 1024;
     canvas.height = 576;
@@ -54,7 +55,7 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     const enemy = new Fighter({
-        position: { x: 400, y: 100 },
+        position: { x: 800, y: 100 },
         velocity: { x: 0, y: 0 },
         imageSrc: 'img/panda/IDLE.png',
         framesMax: 8,
@@ -79,7 +80,7 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         },
         attackBox:{
-            offset: { x:-20, y:100 },
+            offset: { x: -150, y: 100 },
             width: 75,
             height: 75
         },
@@ -94,7 +95,10 @@ document.addEventListener('DOMContentLoaded', () => {
         ArrowRight: { pressed: false }
     };
 
-    decreaseTimer();
+    function startGame() {
+        decreaseTimer();
+        animate();
+    }
 
     function animate() {
         window.requestAnimationFrame(animate);
@@ -167,7 +171,9 @@ document.addEventListener('DOMContentLoaded', () => {
             determineWinner({ player, enemy, timerId });
         }
     }
-    animate();
+
+    // Start game on button click
+    startButton.addEventListener('click', startGame);
 
     // FORWARD PLAYER 1
     window.addEventListener('keydown', (event) => {

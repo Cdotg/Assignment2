@@ -95,7 +95,11 @@ class Fighter extends Sprite {
         this.animateFrames();
 
         // Set attack box position in front of the fighter
-        this.attackBox.position.x = this.position.x + this.attackBox.offset.x;
+        if (this.lastKey === 'ArrowLeft') {
+            this.attackBox.position.x = this.position.x - this.attackBox.width + this.attackBox.offset.x;
+        } else {
+            this.attackBox.position.x = this.position.x + this.attackBox.offset.x;
+        }
         this.attackBox.position.y = this.position.y + this.attackBox.offset.y;
 
         // c.fillRect(this.attackBox.position.x, this.attackBox.position.y, this.attackBox.width, this.attackBox.height);
