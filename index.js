@@ -40,6 +40,10 @@ document.addEventListener('DOMContentLoaded', () => {
                 imageSrc: 'img/samurai2/JUMP.png',
                 framesMax: 3,
             },
+            attack:{
+                imageSrc: 'img/samurai2/ATTACK 1.png',
+                framesMax: 5,
+            }
         },
         canvas: canvas,
         gravity: gravity
@@ -50,6 +54,29 @@ document.addEventListener('DOMContentLoaded', () => {
         velocity: { x: 0, y: 0 },
         color: 'blue',
         offset: { x: -50, y: 0 },
+        imageSrc: 'img/samurai2/IDLE.png',
+        framesMax: 5,
+        scale: 2.5,
+        offset: { x: 32, y: -60
+        },
+        sprites: {
+            idle:{
+                imageSrc: 'img/samurai2/IDLE.png',
+                framesMax: 5,
+            },
+            run:{
+                imageSrc: 'img/samurai2/RUN.png',
+                framesMax: 8,
+            },
+            jump:{
+                imageSrc: 'img/samurai2/JUMP.png',
+                framesMax: 3,
+            },
+            attack:{
+                imageSrc: 'img/samurai2/ATTACK 1.png',
+                framesMax: 5,
+            }
+        },
         canvas: canvas,
         gravity: gravity
     });
@@ -81,7 +108,7 @@ document.addEventListener('DOMContentLoaded', () => {
         } else if (keys.d.pressed && player.lastKey === 'd') {
             player.velocity.x = 5;
             player.switchSprite('run');
-        } else if (player.velocity.y === 0) {
+        } else if (player.velocity.y === 0 && !player.isAttacking) {
             player.switchSprite('idle');
         }
 

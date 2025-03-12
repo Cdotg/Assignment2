@@ -98,22 +98,25 @@ class Fighter extends Sprite {
         if (this.position.y + this.height + this.velocity.y >= this.canvas.height - 96) {
             this.velocity.y = 0;
             this.position.y = 330;
-     
-            
-        } else this.velocity.y += this.gravity
-        
-        console.log(this.position.y)
-        
+        } else {
+            this.velocity.y += this.gravity;
+        }
     }
  
     switchSprite(sprite) {
+        // Override when attacking
+        if (this.image === this.sprites.attack.image && this.frameCurrent < this.sprites.attack.framesMax - 1) return;
+
+        // Prevent switching to the same sprite
         if (this.image === this.sprites[sprite].image) return;
+
         this.image = this.sprites[sprite].image;
         this.framesMax = this.sprites[sprite].framesMax;
         this.frameCurrent = 0;
     }
 
     attack() {
+        this.switchSprite('attack');
         this.isAttacking = true;
         setTimeout(() => {
             this.isAttacking = false;
