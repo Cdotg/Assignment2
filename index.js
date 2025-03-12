@@ -145,7 +145,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // Collision detection
         if (
-            rectangularCollision({ rectangle1: player.attackBox, rectangle2: enemy }) &&
+            rectangularCollision({ rectangle1: player, rectangle2: enemy }) &&
             player.isAttacking
         ) {
             player.isAttacking = false;
@@ -154,7 +154,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         if (
-            rectangularCollision({ rectangle1: enemy.attackBox, rectangle2: player }) &&
+            rectangularCollision({ rectangle1: enemy, rectangle2: player }) &&
             enemy.isAttacking
         ) {
             enemy.isAttacking = false;
