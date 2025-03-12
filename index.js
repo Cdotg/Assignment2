@@ -5,21 +5,41 @@ document.addEventListener('DOMContentLoaded', () => {
     canvas.width = 1024;
     canvas.height = 576;
 
-    c.fillRect(0, 0, canvas.width, canvas.height);
     const gravity = 0.7;
 
     const background = new Sprite({
-        position: { 
-            x: 0,
-            y: 0 
-        },
+        position: { x: 0, y: 0 },
         imageSrc: 'img/Background.png'
     });
-   
+
+    const shop = new Sprite({
+        position: { x: 600, y: 210 },
+        imageSrc: 'img/shop.png',
+        scale: 2.5,
+        framesMax: 6
+    });
+
     const player = new Fighter({
         position: { x: 0, y: 0 },
         velocity: { x: 0, y: 0 },
-        offset: { x: 0, y: 0 }
+        imageSrc: 'img/samurai/IDLE.png',
+        framesMax: 10,
+        scale: 2.5,
+        offset: { x: 96, y: 75 },
+        sprites: {
+            idle:{
+                imageSrc: 'img/samurai/IDLE.png',
+                framesMax: 10,
+            },
+            run:{
+                imageSrc: 'img/samurai/RUN.png',
+                framesMax: 16,
+                image: new Image(),
+                offset: { x: 36, y: 75 } // Adjust offset for run sprite
+            },
+            
+
+        }
     });
 
     const enemy = new Fighter({
@@ -36,15 +56,15 @@ document.addEventListener('DOMContentLoaded', () => {
         ArrowRight: { pressed: false }
     };
 
-    decreaseTimer()
+    decreaseTimer();
 
     function animate() {
         window.requestAnimationFrame(animate);
-        c.fillStyle = 'black';
-        c.fillRect(0, 0, canvas.width, canvas.height);
+        c.clearRect(0, 0, canvas.width, canvas.height); // Clear the canvas
         background.update(c);
+        shop.update(c);
         player.update(c);
-        enemy.update(c);
+        // enemy.update(c);
 
         player.velocity.x = 0;
         enemy.velocity.x = 0;
@@ -52,13 +72,18 @@ document.addEventListener('DOMContentLoaded', () => {
         // Player movement
         if (keys.a.pressed && player.lastKey === 'a') {
             player.velocity.x = -5;
+            player.switchSprite('run');
         } else if (keys.d.pressed && player.lastKey === 'd') {
             player.velocity.x = 5;
+            player.switchSprite('run');
+        } else {
+            player.switchSprite('idle');
         }
 
         // Enemy movement
         if (keys.ArrowLeft.pressed && enemy.lastKey === 'ArrowLeft') {
             enemy.velocity.x = -5;
+          
         } else if (keys.ArrowRight.pressed && enemy.lastKey === 'ArrowRight') {
             enemy.velocity.x = 5;
         }
@@ -82,13 +107,11 @@ document.addEventListener('DOMContentLoaded', () => {
             document.querySelector('#playerHealth').style.width = player.health + '%';
         }
 
-        //end game based on health
+        // End game based on health
         if (enemy.health <= 0 || player.health <= 0) {
-            determineWinner({player, enemy,timerId})
-
-
+            determineWinner({ player, enemy, timerId });
+        }
     }
-}
     animate();
 
     // FORWARD PLAYER 1
