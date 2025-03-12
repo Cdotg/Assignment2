@@ -25,7 +25,7 @@ document.addEventListener('DOMContentLoaded', () => {
         imageSrc: 'img/samurai2/IDLE.png',
         framesMax: 5,
         scale: 2.5,
-        offset: { x: 0, y: -60 },
+        offset: { x: -30, y: -60 },
         sprites: {
             idle:{
                 imageSrc: 'img/samurai2/IDLE.png',
@@ -45,8 +45,8 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         },
         attackBox:{
-            offset: { x: 100, y: 140},
-            width: 115, 
+            offset: { x: 120, y: 140},
+            width: 75, 
             height: 40
         },
         canvas: canvas,
@@ -79,8 +79,8 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         },
         attackBox:{
-            offset: { x:-125, y:100 },
-            width: 50,
+            offset: { x:-20, y:100 },
+            width: 75,
             height: 75
         },
         canvas: canvas,
@@ -145,7 +145,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // Collision detection
         if (
-            rectangularCollision({ rectangle1: player, rectangle2: enemy }) &&
+            rectangularCollision({ rectangle1: player.attackBox, rectangle2: enemy }) &&
             player.isAttacking
         ) {
             player.isAttacking = false;
@@ -154,7 +154,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         if (
-            rectangularCollision({ rectangle1: enemy, rectangle2: player }) &&
+            rectangularCollision({ rectangle1: enemy.attackBox, rectangle2: player }) &&
             enemy.isAttacking
         ) {
             enemy.isAttacking = false;

@@ -53,7 +53,7 @@ class Fighter extends Sprite {
                   imageSrc, scale = 1,
                   framesMax = 1, offset = { x: 0, y: 0 },
                   sprites,
-                  attackBox = {offset:{x:100, y:100},width: undefined, height:undefined},
+                  attackBox = {offset:{x:0, y:0},width: undefined, height:undefined},
                   canvas,
                   gravity }) {
         super({
@@ -65,7 +65,7 @@ class Fighter extends Sprite {
         });
 
         this.velocity = velocity;
-        this.width = 50; // Default width
+        this.width = 70; // Default width
         this.height = 150;
         this.lastKey;
         this.attackBox = {
