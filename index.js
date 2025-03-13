@@ -12,7 +12,6 @@ document.addEventListener('DOMContentLoaded', () => {
         imageSrc: 'img/Background.png'
     });
 
-   
     const player = new Fighter({
         position: { x: 0, y: 0 },
         velocity: { x: 0, y: 0 },
@@ -123,7 +122,6 @@ document.addEventListener('DOMContentLoaded', () => {
         window.requestAnimationFrame(animate);
         c.clearRect(0, 0, canvas.width, canvas.height); // Clear the canvas
         background.update(c);
-        // shop.update(c);
         c.fillStyle = 'rgba(255, 255, 255, 0.15)';
         c.fillRect(0, 0, canvas.width, canvas.height);
         player.update(c);
@@ -173,7 +171,7 @@ document.addEventListener('DOMContentLoaded', () => {
             rectangularCollision({ rectangle1: player, rectangle2: enemy }) &&
             player.isAttacking && player.frameCurrent === 3
         ) {
-            enemy.takeHit()
+            enemy.takeHit();
             player.isAttacking = false;
 
             gsap.to('#enemyHealth', {
@@ -182,36 +180,29 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         // if player misses
-
         if (player.isAttacking && player.frameCurrent === 3) {
             player.isAttacking = false;
         }
 
-        // where are players gets hit
-
+        // where player gets hit
         if (
             rectangularCollision({ rectangle1: enemy, rectangle2: player }) &&
             enemy.isAttacking && enemy.frameCurrent === 5
         ) {
             player.takeHit();
             enemy.isAttacking = false;
+
             gsap.to('#playerHealth', {
                 width: player.health + '%'
             });
         }
 
         // if enemy misses
-
-
         if (enemy.isAttacking && enemy.frameCurrent === 5) {
             enemy.isAttacking = false;
         }
 
-        // Draw attack boxes
-        // c.fillStyle = 'rgba(255, 0, 0, 0.5)';
-        // c.fillRect(player.attackBox.position.x, player.attackBox.position.y, player.attackBox.width, player.attackBox.height);
-        // c.fillRect(enemy.attackBox.position.x, enemy.attackBox.position.y, enemy.attackBox.width, enemy.attackBox.height);
-
+        
         // End game based on health
         if (enemy.health <= 0 || player.health <= 0) {
             determineWinner({ player, enemy, timerId });
