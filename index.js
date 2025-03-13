@@ -175,7 +175,8 @@ document.addEventListener('DOMContentLoaded', () => {
             player.isAttacking = false;
 
             gsap.to('#enemyHealth', {
-                width: enemy.health + '%'
+                width: enemy.health + '%',
+                right: 0
             });
         }
 
