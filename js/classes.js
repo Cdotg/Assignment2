@@ -1,20 +1,20 @@
 class Sprite {
     constructor({ position, velocity, color = 'red', imageSrc, scale = 1, framesMax = 1, offset = { x: 0, y: 0 } }) {
         this.position = position;
-        this.width = 1024; // Set width to canvas width
-        this.height = 576; // Set height to canvas height
-        this.color = color; // Add color property
+        this.width = 1024;
+        this.height = 576;
+        this.color = color;
         this.image = new Image();
         this.image.src = imageSrc;
         this.scale = scale;
         this.framesMax = framesMax;
         this.frameCurrent = 0;
         this.frameElapsed = 0;
-        this.framesHold = 5;
+        this.framesHold = 8;
         this.offset = offset;
     }
 
-    draw(c) { // Pass `c` explicitly
+    draw(c) {
         c.drawImage(
             this.image,
             this.frameCurrent * (this.image.width / this.framesMax),
@@ -47,35 +47,18 @@ class Sprite {
 }
 
 class Fighter extends Sprite {
-    constructor({position,
-                 velocity,
-                  color = 'red',
-                  imageSrc, scale = 1,
-                  framesMax = 1, offset = { x: 0, y: 0 },
-                  sprites,
-                  attackBox = {offset:{x:0, y:0},width: undefined, height:undefined},
-                  canvas,
-                  gravity }) {
-        super({
-            position,
-            imageSrc,
-            scale,
-            framesMax,
-            offset
-        });
+    constructor({ position, velocity, color = 'red', imageSrc, scale = 1, framesMax = 1, offset = { x: 0, y: 0 }, sprites, attackBox = { offset: { x: 0, y: 0 }, width: undefined, height: undefined }, canvas, gravity }) {
+        super({ position, imageSrc, scale, framesMax, offset });
 
         this.velocity = velocity;
-        this.width = 70; // Default width
+        this.width = 70;
         this.height = 150;
         this.lastKey;
         this.attackBox = {
-            position: {
-                x: this.position.x,
-                y: this.position.y
-            },
+            position: { x: this.position.x, y: this.position.y },
             offset: attackBox.offset,
             width: attackBox.width,
-            height: attackBox.height,
+            height: attackBox.height
         };
         this.color = color;
         this.isAttacking;
@@ -85,7 +68,7 @@ class Fighter extends Sprite {
         this.canvas = canvas;
         this.gravity = gravity;
 
-        for (const sprite in sprites){
+        for (const sprite in sprites) {
             sprites[sprite].image = new Image();
             sprites[sprite].image.src = sprites[sprite].imageSrc;
         }
@@ -95,14 +78,12 @@ class Fighter extends Sprite {
         this.draw(c);
         if (!this.dead) this.animateFrames();
 
-        // Set attack box position in front of the fighter
         this.attackBox.position.x = this.position.x + this.attackBox.offset.x;
         this.attackBox.position.y = this.position.y + this.attackBox.offset.y;
 
         this.position.x += this.velocity.x;
         this.position.y += this.velocity.y;
 
-        // Gravity simulation
         if (this.position.y + this.height + this.velocity.y >= this.canvas.height - 96) {
             this.velocity.y = 0;
             this.position.y = 330;
@@ -128,16 +109,14 @@ class Fighter extends Sprite {
 
     switchSprite(sprite) {
         if (this.image === this.sprites.death.image) {
-            if (this.frameCurrent === this.sprites.death.framesMax - 1) 
-                this.dead = true;
+            if (this.frameCurrent === this.sprites.death.framesMax - 1) this.dead = true;
             return;
         }
-        // Override when attacking
+
         if (this.image === this.sprites.attack.image && this.frameCurrent < this.sprites.attack.framesMax - 1) return;
 
         if (this.image === this.sprites.takeHit.image && this.frameCurrent < this.sprites.takeHit.framesMax - 1) return;
 
-        // Prevent switching to the same sprite
         if (this.image === this.sprites[sprite].image) return;
 
         this.image = this.sprites[sprite].image;
