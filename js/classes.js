@@ -81,6 +81,7 @@ class Fighter extends Sprite {
         this.isAttacking;
         this.health = 100;
         this.sprites = sprites;
+        this.dead = false;
         this.canvas = canvas;
         this.gravity = gravity;
 
@@ -92,17 +93,11 @@ class Fighter extends Sprite {
 
     update(c) {
         this.draw(c);
-        this.animateFrames();
+        if (!this.dead) this.animateFrames();
 
         // Set attack box position in front of the fighter
-        if (this.lastKey === 'ArrowLeft') {
-            this.attackBox.position.x = this.position.x - this.attackBox.width + this.attackBox.offset.x;
-        } else {
-            this.attackBox.position.x = this.position.x + this.attackBox.offset.x;
-        }
+        this.attackBox.position.x = this.position.x + this.attackBox.offset.x;
         this.attackBox.position.y = this.position.y + this.attackBox.offset.y;
-
-        // c.fillRect(this.attackBox.position.x, this.attackBox.position.y, this.attackBox.width, this.attackBox.height);
 
         this.position.x += this.velocity.x;
         this.position.y += this.velocity.y;
@@ -115,10 +110,32 @@ class Fighter extends Sprite {
             this.velocity.y += this.gravity;
         }
     }
- 
+
+    attack() {
+        this.switchSprite('attack');
+        this.isAttacking = true;
+    }
+
+    takeHit() {
+        this.health -= 20;
+
+        if (this.health <= 0) {
+            this.switchSprite('death');
+        } else {
+            this.switchSprite('takeHit');
+        }
+    }
+
     switchSprite(sprite) {
+        if (this.image === this.sprites.death.image) {
+            if (this.frameCurrent === this.sprites.death.framesMax - 1) 
+                this.dead = true;
+            return;
+        }
         // Override when attacking
         if (this.image === this.sprites.attack.image && this.frameCurrent < this.sprites.attack.framesMax - 1) return;
+
+        if (this.image === this.sprites.takeHit.image && this.frameCurrent < this.sprites.takeHit.framesMax - 1) return;
 
         // Prevent switching to the same sprite
         if (this.image === this.sprites[sprite].image) return;
@@ -127,12 +144,6 @@ class Fighter extends Sprite {
         this.framesMax = this.sprites[sprite].framesMax;
         this.frameCurrent = 0;
     }
-
-    attack() {
-        this.switchSprite('attack');
-        this.isAttacking = true;
-        setTimeout(() => {
-            this.isAttacking = false;
-        }, 100);
-    }
 }
+
+

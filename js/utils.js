@@ -28,7 +28,7 @@ let timerId
 function decreaseTimer() {
     
     if (timer>0){
-        setTimeout(decreaseTimer, 1000);
+        setTimeout(decreaseTimer, 100);
         timer--
         document.querySelector('#timer').innerHTML = timer
 
