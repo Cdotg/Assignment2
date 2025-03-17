@@ -1,6 +1,8 @@
 let gameStarted = false;
 let gameMode = 'twoPlayer';
 
+const backgroundMusic = new Audio('audio/background.mp3'); // ADDED
+
 document.addEventListener('DOMContentLoaded', () => {
     const canvas = document.querySelector('canvas');
     const c = canvas.getContext('2d');
@@ -280,6 +282,7 @@ document.addEventListener('DOMContentLoaded', () => {
     startGameBtn.addEventListener('click', () => {
         startGameBtn.style.display = 'none';
         gameStarted = true;
+        backgroundMusic.pause(); // ADDED
         decreaseTimer();
     });
 
@@ -287,4 +290,7 @@ document.addEventListener('DOMContentLoaded', () => {
     restartGameBtn.addEventListener('click', () => {
         location.reload();
     });
+
+    backgroundMusic.loop = true; // ADDED
+    backgroundMusic.play(); // ADDED
 });
