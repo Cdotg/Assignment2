@@ -67,6 +67,7 @@ class Fighter extends Sprite {
         this.dead = false;
         this.canvas = canvas;
         this.gravity = gravity;
+        this.attackCooldown = false; // ADDED: cooldown flag
 
         for (const sprite in sprites) {
             sprites[sprite].image = new Image();
@@ -93,8 +94,15 @@ class Fighter extends Sprite {
     }
 
     attack() {
+        if (this.attackCooldown) return; // ADDED: check cooldown
+
         this.switchSprite('attack');
         this.isAttacking = true;
+        this.attackCooldown = true; // ADDED: set cooldown
+
+        setTimeout(() => {
+            this.attackCooldown = false; // ADDED: reset cooldown after 2 seconds
+        }, 2000);
     }
 
     takeHit() {

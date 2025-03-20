@@ -1,9 +1,33 @@
+// Import TensorFlow.js
+let model; // ✅ Global model variable
+let trainingData = []; // ✅ Move training data to the top
+// Load AI Model (Persistent Learning)
+async function loadModel() {
+    try {
+        model = await tf.loadLayersModel('localstorage://ai-enemy-model');
+        console.log("AI model loaded from storage!");
+    } catch (error) {
+        console.log("No saved model found, using default AI.");
+        model = tf.sequential();
+        model.add(tf.layers.dense({ units: 8, inputShape: [4], activation: 'relu' }));
+        model.add(tf.layers.dense({ units: 16, activation: 'relu' }));
+        model.add(tf.layers.dense({ units: 4, activation: 'softmax' }));
+        model.compile({ optimizer: 'adam', loss: 'categoricalCrossentropy' });
+    }
+}
+
+
+
+
+
 let gameStarted = false;
 let gameMode = 'twoPlayer';
 
-const backgroundMusic = new Audio('audio/background.mp3'); // ADDED
+const backgroundMusic = new Audio('audio/background.mp3');
+const gameMusic = new Audio('audio/battle.mp3');
 
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', async () => {
+    await loadModel();  // ✅ Load AI model first
     const canvas = document.querySelector('canvas');
     const c = canvas.getContext('2d');
 
@@ -16,6 +40,9 @@ document.addEventListener('DOMContentLoaded', () => {
         position: { x: 0, y: 0 },
         imageSrc: 'img/Background.png'
     });
+
+
+
 
     const player = new Fighter({
         position: { x: 0, y: 0 },
@@ -64,27 +91,76 @@ document.addEventListener('DOMContentLoaded', () => {
         ArrowRight: { pressed: false }
     };
 
-    function updateEnemyAI(player, enemy) {
-        const distance = player.position.x - enemy.position.x;
+    let trainingData = [];
 
-        if (distance > 50) {
+
+async function trainModel() {
+    if (trainingData.length === 0) return;  // Avoid training on empty data
+
+    const inputs = tf.tensor2d(trainingData.map(d => d[0]));
+    const labels = tf.tensor2d(trainingData.map(d => {
+        let arr = [0, 0, 0, 0];
+        arr[d[1]] = 1;
+        return arr;
+    }));
+
+    await model.fit(inputs, labels, { epochs: 20 });
+    console.log("AI training complete!");
+
+    // 🔹 Save Model to Local Storage
+    await model.save('localstorage://ai-enemy-model');
+    localStorage.setItem('ai-trained', 'true'); // Mark AI as trained
+    console.log("Model saved!");
+}
+
+
+function recordTrainingData(player, enemy) {
+    const distance = player.position.x - enemy.position.x;
+    const playerAttacking = player.isAttacking ? 1 : 0;
+    const enemyHealth = enemy.health / 100;
+    const randomness = Math.random();
+    const action = Math.floor(Math.random() * 4); // Random move for training
+
+    trainingData.push([[distance, playerAttacking, enemyHealth, randomness], action]);
+
+    // 🔹 After collecting enough data, train AI automatically
+    if (trainingData.length > 500) {
+        trainModel();
+    }
+}
+
+function updateEnemyAI(player, enemy) {
+    if (!model) return; // ✅ Avoid AI trying to run without a model
+
+    const distance = player.position.x - enemy.position.x;
+    const playerAttacking = player.isAttacking ? 1 : 0;
+    const enemyHealth = enemy.health / 100;
+    const randomness = Math.random();
+
+    // Prepare input tensor
+    const input = tf.tensor2d([[distance, playerAttacking, enemyHealth, randomness]]);
+    
+    // Predict best move
+    model.predict(input).data().then(predictions => {
+        const actionIndex = predictions.indexOf(Math.max(...predictions)); // Choose highest value action
+        
+        if (actionIndex === 0 && distance > 50) {
             enemy.velocity.x = 5;
-            enemy.switchSprite('run');
-        } else if (distance < -150) {
+            enemy.switchSprite('run'); 
+        } else if (actionIndex === 1 && distance < -50) {
             enemy.velocity.x = -5;
-            enemy.switchSprite('run');
-        } else {
+            enemy.switchSprite('run'); 
+        } else if (actionIndex === 2) {
             enemy.velocity.x = 0;
             enemy.switchSprite('idle');
-            if (Math.random() < 0.01) {
-                enemy.attack();
-            }
+            enemy.attack(); // AI attacks when close
+        } else if (actionIndex === 3 && enemy.velocity.y === 0) {
+            enemy.velocity.y = -15; // AI jumps randomly
         }
+    });
+}
 
-        if (enemy.velocity.y === 0 && Math.random() < 0.005) {
-            enemy.velocity.y = -15;
-        }
-    }
+
 
     function animate() {
         window.requestAnimationFrame(animate);
@@ -110,7 +186,7 @@ document.addEventListener('DOMContentLoaded', () => {
             player.velocity.x = -7;
             player.switchSprite('run');
         } else if (keys.d.pressed && player.lastKey === 'd' && !player.dead) {
-            player.velocity.x = 7;
+            player.velocity.x = 10;
             player.switchSprite('run');
         } else if (player.velocity.y === 0 && !player.isAttacking && !player.dead) {
             player.switchSprite('idle');
@@ -123,8 +199,13 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         if (gameMode === 'singlePlayer') {
-            updateEnemyAI(player, enemy);
-        } else {
+            recordTrainingData(player, enemy); // Collect data for AI
+            updateEnemyAI(player, enemy); // AI-controlled enemy
+        }
+        
+        
+        
+         else {
             if (keys.ArrowLeft.pressed && enemy.lastKey === 'ArrowLeft' && !enemy.dead) {
                 enemy.velocity.x = -5;
                 enemy.switchSprite('run');
@@ -231,7 +312,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     break;
                 case 'ArrowUp':
                     if (enemy.velocity.y === 0) {
-                        enemy.velocity.y = -20;
+                        enemy.velocity.y = -17;
                     }
                     break;
                 case 'ArrowDown':
@@ -282,15 +363,34 @@ document.addEventListener('DOMContentLoaded', () => {
     startGameBtn.addEventListener('click', () => {
         startGameBtn.style.display = 'none';
         gameStarted = true;
-        backgroundMusic.pause(); // ADDED
+        backgroundMusic.pause();
+        gameMusic.currentTime = 0;
+        gameMusic.loop = true;
+        gameMusic.play();
         decreaseTimer();
     });
 
     const restartGameBtn = document.getElementById('restartGameBtn');
     restartGameBtn.addEventListener('click', () => {
+        gameMusic.pause();
         location.reload();
     });
 
-    backgroundMusic.loop = true; // ADDED
-    backgroundMusic.play(); // ADDED
+    backgroundMusic.currentTime = 3;
+    backgroundMusic.loop = true;
+    backgroundMusic.play();
+
+    backgroundMusic.addEventListener('ended', () => {
+        backgroundMusic.currentTime = 3;
+        backgroundMusic.play();
+    });
+
+    backgroundMusic.play();
+
+    function resetAI() {
+        localStorage.removeItem('ai-trained');
+        localStorage.removeItem('ai-enemy-model');
+        console.log("AI model reset!");
+    }
+    
 });
