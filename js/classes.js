@@ -75,6 +75,13 @@ class Fighter extends Sprite {
         }
     }
 
+    draw(c) {
+        super.draw(c);
+        // Draw a box over the player's position
+        c.fillStyle = 'rgba(255, 0, 0, 0.5)';
+        c.fillRect(this.position.x, this.position.y, this.width, this.height);
+    }
+
     update(c) {
         this.draw(c);
         if (!this.dead) this.animateFrames();
@@ -84,6 +91,13 @@ class Fighter extends Sprite {
 
         this.position.x += this.velocity.x;
         this.position.y += this.velocity.y;
+
+        // Ensure the fighter does not go past the canvas sides
+        if (this.position.x < 0) {
+            this.position.x = 0;
+        } else if (this.position.x + this.width > this.canvas.width) {
+            this.position.x = this.canvas.width - this.width;
+        }
 
         if (this.position.y + this.height + this.velocity.y >= this.canvas.height - 96) {
             this.velocity.y = 0;
