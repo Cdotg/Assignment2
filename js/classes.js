@@ -78,8 +78,8 @@ class Fighter extends Sprite {
     draw(c) {
         super.draw(c);
         // Draw a box over the player's position
-        c.fillStyle = 'rgba(255, 0, 0, 0.5)';
-        c.fillRect(this.position.x, this.position.y, this.width, this.height);
+        // c.fillStyle = 'rgba(255, 0, 0, 0.5)';
+        // c.fillRect(this.position.x, this.position.y, this.width, this.height);
     }
 
     update(c) {

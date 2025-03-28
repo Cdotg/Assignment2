@@ -1,33 +1,14 @@
-// Import TensorFlow.js
-let model; // ✅ Global model variable
-let trainingData = []; // ✅ Move training data to the top
-// Load AI Model (Persistent Learning)
-async function loadModel() {
-    try {
-        model = await tf.loadLayersModel('localstorage://ai-enemy-model');
-        console.log("AI model loaded from storage!");
-    } catch (error) {
-        console.log("No saved model found, using default AI.");
-        model = tf.sequential();
-        model.add(tf.layers.dense({ units: 8, inputShape: [4], activation: 'relu' }));
-        model.add(tf.layers.dense({ units: 16, activation: 'relu' }));
-        model.add(tf.layers.dense({ units: 4, activation: 'softmax' }));
-        model.compile({ optimizer: 'adam', loss: 'categoricalCrossentropy' });
-    }
-}
-
-
-
-
-
 let gameStarted = false;
 let gameMode = 'twoPlayer';
+let difficultyLevel = 'easy';
+
+const movementSpeed = 7;
+const jumpHeight = -20;
 
 const backgroundMusic = new Audio('audio/background.mp3');
 const gameMusic = new Audio('audio/battle.mp3');
 
-document.addEventListener('DOMContentLoaded', async () => {
-    await loadModel();  // ✅ Load AI model first
+document.addEventListener('DOMContentLoaded', () => {
     const canvas = document.querySelector('canvas');
     const c = canvas.getContext('2d');
 
@@ -41,49 +22,6 @@ document.addEventListener('DOMContentLoaded', async () => {
         imageSrc: 'img/Background.png'
     });
 
-
-
-
-    const player = new Fighter({
-        position: { x: 0, y: 0 },
-        velocity: { x: 0, y: 0 },
-        imageSrc: 'img/samurai2/IDLE.png',
-        framesMax: 5,
-        scale: 2.5,
-        offset: { x: -30, y: -60 },
-        sprites: {
-            idle: { imageSrc: 'img/samurai2/IDLE.png', framesMax: 5 },
-            run: { imageSrc: 'img/samurai2/RUN.png', framesMax: 8 },
-            jump: { imageSrc: 'img/samurai2/JUMP.png', framesMax: 3 },
-            attack: { imageSrc: 'img/samurai2/ATTACK 1.png', framesMax: 5 },
-            takeHit: { imageSrc: 'img/samurai2/HURT.png', framesMax: 4 },
-            death: { imageSrc: 'img/samurai2/DEATH.png', framesMax: 9 }
-        },
-        attackBox: { offset: { x: 200, y: 140 }, width: 10, height: 25 },
-        canvas: canvas,
-        gravity: gravity
-    });
-
-    const enemy = new Fighter({
-        position: { x: 800, y: 100 },
-        velocity: { x: 0, y: 0 },
-        imageSrc: 'img/panda/IDLE.png',
-        framesMax: 8,
-        scale: 2,
-        offset: { x: 80, y: -80 },
-        sprites: {
-            idle: { imageSrc: 'img/panda/IDLE.png', framesMax: 8 },
-            run: { imageSrc: 'img/panda/RUN.png', framesMax: 8 },
-            jump: { imageSrc: 'img/panda/JUMP.png', framesMax: 3 },
-            attack: { imageSrc: 'img/panda/ATTACK 1.png', framesMax: 7 },
-            takeHit: { imageSrc: 'img/panda/HURT.png', framesMax: 4 },
-            death: { imageSrc: 'img/panda/DEATH.png', framesMax: 9 }
-        },
-        attackBox: { offset: { x: -150, y: 125 }, width: 10, height: 25 },
-        canvas: canvas,
-        gravity: gravity
-    });
-
     const keys = {
         a: { pressed: false },
         d: { pressed: false },
@@ -91,76 +29,167 @@ document.addEventListener('DOMContentLoaded', async () => {
         ArrowRight: { pressed: false }
     };
 
-    let trainingData = [];
+    function updateEnemyAI(player, enemy) {
+        const distance = player.position.x - enemy.position.x;
 
+        if (difficultyLevel === 'easy') {
+            if (distance > 200) {
+                enemy.velocity.x = 3;
+                enemy.switchSprite('run');
+            } else if (distance < -200) {
+                enemy.velocity.x = -3;
+                enemy.switchSprite('run');
+            } else {
+                enemy.velocity.x = 0;
+                if (Math.random() < 0.3) {
+                    enemy.attack();
+                } else {
+                    enemy.switchSprite('idle');
+                }
+            }
+        } else if (difficultyLevel === 'medium') {
+            if (distance > 150) {
+                enemy.velocity.x = 5;
+                enemy.switchSprite('run');
+            } else if (distance < -150) {
+                enemy.velocity.x = -5;
+                enemy.switchSprite('run');
+            } else {
+                enemy.velocity.x = 0;
+                if (Math.random() < 0.5) {
+                    enemy.attack();
+                } else {
+                    enemy.switchSprite('idle');
+                }
+            }
+        } else if (difficultyLevel === 'hard') {
+            if (distance > 100) {
+                enemy.velocity.x = 7;
+                enemy.switchSprite('run');
+            } else if (distance < -100) {
+                enemy.velocity.x = -7;
+                enemy.switchSprite('run');
+            } else {
+                enemy.velocity.x = 0;
+                if (Math.random() < 0.7) {
+                    enemy.attack();
+                } else {
+                    enemy.switchSprite('idle');
+                }
+            }
 
-async function trainModel() {
-    if (trainingData.length === 0) return;  // Avoid training on empty data
-
-    const inputs = tf.tensor2d(trainingData.map(d => d[0]));
-    const labels = tf.tensor2d(trainingData.map(d => {
-        let arr = [0, 0, 0, 0];
-        arr[d[1]] = 1;
-        return arr;
-    }));
-
-    await model.fit(inputs, labels, { epochs: 20 });
-    console.log("AI training complete!");
-
-    // 🔹 Save Model to Local Storage
-    await model.save('localstorage://ai-enemy-model');
-    localStorage.setItem('ai-trained', 'true'); // Mark AI as trained
-    console.log("Model saved!");
-}
-
-
-function recordTrainingData(player, enemy) {
-    const distance = player.position.x - enemy.position.x;
-    const playerAttacking = player.isAttacking ? 1 : 0;
-    const enemyHealth = enemy.health / 100;
-    const randomness = Math.random();
-    const action = Math.floor(Math.random() * 4); // Random move for training
-
-    trainingData.push([[distance, playerAttacking, enemyHealth, randomness], action]);
-
-    // 🔹 After collecting enough data, train AI automatically
-    if (trainingData.length > 500) {
-        trainModel();
+            if (Math.random() < 0.1 && enemy.velocity.y === 0) {
+                enemy.velocity.y = -15;
+            }
+        }
     }
-}
 
-function updateEnemyAI(player, enemy) {
-    if (!model) return; // ✅ Avoid AI trying to run without a model
+    const startGameBtn = document.getElementById('startGameBtn');
+    const modeButton = document.getElementById('modeToggle');
+    const difficultyButton = document.getElementById('difficultyToggle');
 
-    const distance = player.position.x - enemy.position.x;
-    const playerAttacking = player.isAttacking ? 1 : 0;
-    const enemyHealth = enemy.health / 100;
-    const randomness = Math.random();
+    let player, enemy;
 
-    // Prepare input tensor
-    const input = tf.tensor2d([[distance, playerAttacking, enemyHealth, randomness]]);
-    
-    // Predict best move
-    model.predict(input).data().then(predictions => {
-        const actionIndex = predictions.indexOf(Math.max(...predictions)); // Choose highest value action
-        
-        if (actionIndex === 0 && distance > 50) {
-            enemy.velocity.x = 5;
-            enemy.switchSprite('run'); 
-        } else if (actionIndex === 1 && distance < -50) {
-            enemy.velocity.x = -5;
-            enemy.switchSprite('run'); 
-        } else if (actionIndex === 2) {
-            enemy.velocity.x = 0;
-            enemy.switchSprite('idle');
-            enemy.attack(); // AI attacks when close
-        } else if (actionIndex === 3 && enemy.velocity.y === 0) {
-            enemy.velocity.y = -15; // AI jumps randomly
+    function initializeGame() {
+        player = new Fighter({
+            position: { x: 0, y: 0 },
+            velocity: { x: 0, y: 0 },
+            imageSrc: 'img/samurai2/IDLE.png',
+            framesMax: 5,
+            scale: 2.5,
+            offset: { x: 100, y: -60 },
+            sprites: {
+                idle: { imageSrc: 'img/samurai2/IDLE.png', framesMax: 5 },
+                run: { imageSrc: 'img/samurai2/RUN.png', framesMax: 8 },
+                jump: { imageSrc: 'img/samurai2/JUMP.png', framesMax: 3 },
+                attack: { imageSrc: 'img/samurai2/ATTACK 1.png', framesMax: 5 },
+                takeHit: { imageSrc: 'img/samurai2/HURT.png', framesMax: 4 },
+                death: { imageSrc: 'img/samurai2/DEATH.png', framesMax: 9 }
+            },
+            attackBox: { offset: { x: 70, y: 140 }, width: 10, height: 25 },
+            canvas: canvas,
+            gravity: gravity
+        });
+
+        enemy = new Fighter({
+            position: { x: 800, y: 100 },
+            velocity: { x: 0, y: 0 },
+            imageSrc: 'img/panda/IDLE.png',
+            framesMax: 8,
+            scale: 2,
+            offset: { x: 80, y: -80 },
+            sprites: {
+                idle: { imageSrc: 'img/panda/IDLE.png', framesMax: 8 },
+                run: { imageSrc: 'img/panda/RUN.png', framesMax: 8 },
+                jump: { imageSrc: 'img/panda/JUMP.png', framesMax: 3 },
+                attack: { imageSrc: 'img/panda/ATTACK 1.png', framesMax: 7 },
+                takeHit: { imageSrc: 'img/panda/HURT.png', framesMax: 4 },
+                death: { imageSrc: 'img/panda/DEATH.png', framesMax: 9 }
+            },
+            attackBox: { offset: { x: -70, y: 125 }, width: 15, height: 25 },
+            canvas: canvas,
+            gravity: gravity
+        });
+
+        gameStarted = false;
+        timer = 60;
+        document.querySelector('#timer').innerHTML = timer;
+        document.querySelector('#displayText').style.display = 'none';
+        document.querySelector('#restartGameBtn').style.display = 'none';
+        startGameBtn.style.display = 'block';
+    }
+
+    initializeGame();
+
+    modeButton.addEventListener('click', () => {
+        if (gameMode === 'twoPlayer') {
+            gameMode = 'singlePlayer';
+            modeButton.innerText = 'Switch to Two Player';
+            difficultyButton.disabled = false;
+        } else {
+            gameMode = 'twoPlayer';
+            modeButton.innerText = 'Switch to Single Player';
+            difficultyButton.disabled = true;
+        }
+        initializeGame();
+    });
+
+    difficultyButton.addEventListener('click', () => {
+        if (difficultyLevel === 'easy') {
+            difficultyLevel = 'medium';
+            difficultyButton.innerText = 'Difficulty: Medium';
+        } else if (difficultyLevel === 'medium') {
+            difficultyLevel = 'hard';
+            difficultyButton.innerText = 'Difficulty: Hard';
+        } else {
+            difficultyLevel = 'easy';
+            difficultyButton.innerText = 'Difficulty: Easy';
         }
     });
-}
 
+    startGameBtn.addEventListener('click', () => {
+        startGameBtn.style.display = 'none';
+        gameStarted = true;
+        backgroundMusic.pause();
+        gameMusic.currentTime = 0;
+        gameMusic.loop = true;
+        gameMusic.play();
+        decreaseTimer(player, enemy);
+    });
 
+    const restartGameBtn = document.getElementById('restartGameBtn');
+    restartGameBtn.addEventListener('click', () => {
+        initializeGame();
+    });
+
+    backgroundMusic.currentTime = 3;
+    backgroundMusic.loop = true;
+    backgroundMusic.play();
+
+    backgroundMusic.addEventListener('ended', () => {
+        backgroundMusic.currentTime = 3;
+        backgroundMusic.play();
+    });
 
     function animate() {
         window.requestAnimationFrame(animate);
@@ -183,10 +212,10 @@ function updateEnemyAI(player, enemy) {
         enemy.velocity.x = 0;
 
         if (keys.a.pressed && player.lastKey === 'a' && !player.dead) {
-            player.velocity.x = -7;
+            player.velocity.x = -movementSpeed;
             player.switchSprite('run');
         } else if (keys.d.pressed && player.lastKey === 'd' && !player.dead) {
-            player.velocity.x = 10;
+            player.velocity.x = movementSpeed;
             player.switchSprite('run');
         } else if (player.velocity.y === 0 && !player.isAttacking && !player.dead) {
             player.switchSprite('idle');
@@ -194,23 +223,16 @@ function updateEnemyAI(player, enemy) {
 
         if (player.velocity.y < 0) {
             player.switchSprite('jump');
-        } else if (player.velocity.y > 0) {
-            player.switchSprite('run');
         }
 
         if (gameMode === 'singlePlayer') {
-            recordTrainingData(player, enemy); // Collect data for AI
-            updateEnemyAI(player, enemy); // AI-controlled enemy
-        }
-        
-        
-        
-         else {
+            updateEnemyAI(player, enemy);
+        } else {
             if (keys.ArrowLeft.pressed && enemy.lastKey === 'ArrowLeft' && !enemy.dead) {
-                enemy.velocity.x = -5;
+                enemy.velocity.x = -movementSpeed;
                 enemy.switchSprite('run');
             } else if (keys.ArrowRight.pressed && enemy.lastKey === 'ArrowRight' && !enemy.dead) {
-                enemy.velocity.x = 5;
+                enemy.velocity.x = movementSpeed;
                 enemy.switchSprite('run');
             } else if (enemy.velocity.y === 0 && !enemy.isAttacking && !enemy.dead) {
                 enemy.switchSprite('idle');
@@ -218,8 +240,6 @@ function updateEnemyAI(player, enemy) {
 
             if (enemy.velocity.y < 0) {
                 enemy.switchSprite('jump');
-            } else if (enemy.velocity.y > 0) {
-                enemy.switchSprite('run');
             }
         }
 
@@ -261,20 +281,7 @@ function updateEnemyAI(player, enemy) {
         }
     }
 
-    let timer = 60;
-    let timerId;
-
-    function decreaseTimer() {
-        if (timer > 0) {
-            timerId = setTimeout(decreaseTimer, 1000);
-            timer--;
-            document.querySelector('#timer').innerHTML = timer;
-        }
-
-        if (timer === 0) {
-            determineWinner({ player, enemy, timerId });
-        }
-    }
+    animate();
 
     window.addEventListener('keydown', (event) => {
         if (!gameStarted) return;
@@ -291,7 +298,7 @@ function updateEnemyAI(player, enemy) {
                     break;
                 case 'w':
                     if (player.velocity.y === 0) {
-                        player.velocity.y = -20;
+                        player.velocity.y = jumpHeight;
                     }
                     break;
                 case ' ':
@@ -312,7 +319,7 @@ function updateEnemyAI(player, enemy) {
                     break;
                 case 'ArrowUp':
                     if (enemy.velocity.y === 0) {
-                        enemy.velocity.y = -17;
+                        enemy.velocity.y = jumpHeight;
                     }
                     break;
                 case 'ArrowDown':
@@ -345,52 +352,4 @@ function updateEnemyAI(player, enemy) {
             }
         }
     });
-
-    animate();
-
-    const modeButton = document.getElementById('modeToggle');
-    modeButton.addEventListener('click', () => {
-        if (gameMode === 'twoPlayer') {
-            gameMode = 'singlePlayer';
-            modeButton.innerText = 'Switch to Two Player';
-        } else {
-            gameMode = 'twoPlayer';
-            modeButton.innerText = 'Switch to Single Player';
-        }
-    });
-
-    const startGameBtn = document.getElementById('startGameBtn');
-    startGameBtn.addEventListener('click', () => {
-        startGameBtn.style.display = 'none';
-        gameStarted = true;
-        backgroundMusic.pause();
-        gameMusic.currentTime = 0;
-        gameMusic.loop = true;
-        gameMusic.play();
-        decreaseTimer();
-    });
-
-    const restartGameBtn = document.getElementById('restartGameBtn');
-    restartGameBtn.addEventListener('click', () => {
-        gameMusic.pause();
-        location.reload();
-    });
-
-    backgroundMusic.currentTime = 3;
-    backgroundMusic.loop = true;
-    backgroundMusic.play();
-
-    backgroundMusic.addEventListener('ended', () => {
-        backgroundMusic.currentTime = 3;
-        backgroundMusic.play();
-    });
-
-    backgroundMusic.play();
-
-    function resetAI() {
-        localStorage.removeItem('ai-trained');
-        localStorage.removeItem('ai-enemy-model');
-        console.log("AI model reset!");
-    }
-    
 });

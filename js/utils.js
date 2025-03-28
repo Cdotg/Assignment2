@@ -22,17 +22,14 @@ function determineWinner({player, enemy, timerId}){
 }
 let timer = 60
 let timerId
-function decreaseTimer() {
-    
-    if (timer>0){
-        setTimeout(decreaseTimer, 100);
-        timer--
-        document.querySelector('#timer').innerHTML = timer
-
+function decreaseTimer(player, enemy) { // UPDATED: Accept player and enemy as arguments
+    if (timer > 0) {
+        timerId = setTimeout(() => decreaseTimer(player, enemy), 1000); // UPDATED: Slow down timer to 1 second
+        timer--;
+        document.querySelector('#timer').innerHTML = timer;
     }
 
     if (timer === 0) {
-        
-         determineWinner({ player, enemy, timerId })
-}
+        determineWinner({ player, enemy, timerId });
+    }
 }
